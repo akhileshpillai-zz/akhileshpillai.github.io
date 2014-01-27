@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <style>
+
+        .axis text {
+            font: 14px sans-serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+    </style>
+</head>
+
+<body>
+<script>
+    var data;
+
+    var input;
+
+    input = d3.csv("data/MurderTotal.csv",function(d) {
+        return {
+            Casteism: +d.Casteism,
+            "Class Conflict": +d['Class Conflict'],
+            Communalism: +d.Communalism,
+            Dowry: +d.Dowry,
+            Gain: +d.Gain,
+            "Love Affairs/Sexual relations": +d["Love Affairs/ Sexual relations"],
+            "Lunacy": +d.Lunacy,
+            "Other Causes": +d["Other Causes"],
+            "Personal Vendetta or Enemity": +d["Personal Vendetta or Enemity"],
+            "Political Reasons": +d["Political Reasons"],
+            "Property Dispute": +d["Property Dispute"],
+            "STATE": d["STATE"],
+            "Terrorists / Extremists": +d["Terrorists/ Extremists"],
+            "Witchcraft":+d.Witchcraft,
+            "YEAR":d.YEAR,
+            };
+        },function(error, rows) {
+
+        if (error) return console.warn(error);
+        data = rows;
+
+        var margin = {top: 20, right: 20, bottom: 100, left: 40, xpadding: 20, ypadding:20},
+                width = 1000 - margin.left - margin.right,
+                height = 600 - margin.top - margin.bottom;
+
+        // Create a canvas for svg using the margin dimensions.
+        var canvas = d3.select("body").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g");
+
+        var domainyears = [];
+        data.forEach(function(ele){domainyears.push(ele.YEAR)})
+        var domainreasons = Object.keys(data[0]);
+
+        index = domainreasons.indexOf("YEAR")
+        if (index > -1) {
+            domainreasons.splice(index, 1);
+        }
+        //index = domainreasons.indexOf("Other Causes")
+        //if (index > -1) {
+        //    domainreasons.splice(index, 1);
+       // }
+
+        index = domainreasons.indexOf("STATE")
+
+        if (index > -1) {
+            domainreasons.splice(index, 1);
+        }
+
+        console.log(domainreasons)
+        // Define the scales
+        var xscale = d3.scale.ordinal()
+                .domain(domainyears)
+                .rangePoints([margin.xpadding , (width - 10*margin.xpadding)],1);
+
+
+        var yscale = d3.scale.ordinal()
+                .domain(domainreasons)
+                .rangePoints([margin.ypadding, height - margin.ypadding]);
+
+
+        var color = d3.scale.category20();
+
+        // Define the axes
+        var xAxis = d3.svg.axis()
+                .scale(xscale)
+                .orient("bottom");
+
+
+        //Draw the canvas
+        domainreasons.forEach(function(dr,i){canvasDraw(canvas, dr, data,xscale,yscale,i,height,width,margin,color)})
+
+
+
+        canvas.selectAll("text")
+                .data(domainreasons)
+                .enter()
+                .append("text")
+                .text(function(d) {
+                    return d;
+                })
+                .attr("x", function(d) {
+                    return (width - 7*margin.xpadding);
+                })
+                .attr("y", function(d) {
+                    return (margin.ypadding + yscale(d));
+                })
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "12px")
+                .attr("fill",function(d,i){ return color(i)})
+
+
+
+        // on mouse over
+
+        canvas.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(" + margin.xpadding +"," + (height + margin.top+ margin.ypadding) + ")")
+                .call(xAxis);
+    });
+
+
+    // Define margins
+
+
+function canvasDraw(cv, c, dataf,xscale,yscale,j,height,width,margin,color){
+
+    // if i declare color = d3.scale.category20 in here I can not fill the color as mentioned below.
+    // inside the function for fill j values are propagated however on calling color(j) color does
+    // not change according to the j values.
+
+        cv.selectAll("circle" + j)
+                .data(dataf)
+                .enter()
+                .append("circle")
+                .attr("cx", function(d){return (margin.xpadding + xscale(d.YEAR))})
+                .attr("cy", function(d){return (margin.ypadding + yscale(c))})
+                .attr("r", function (d){return (1.5*Math.log(d[c]))})
+                .attr("fill", function(d,i){ return color(j)})
+                .on("mouseover",function(d){
+                        var xPosition =  margin.xpadding + xscale(d.YEAR)
+                        var yPosition =  margin.ypadding + yscale(c)
+                        cv.append("text")
+                            .attr("id", "tooltip")
+                            .attr("x", xPosition)
+                            .attr("y", yPosition - 15)
+                            .attr("text-anchor", "middle")
+                            .attr("font-family", "sans-serif")
+                            .attr("font-size", "11px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", "black")
+                            .text(d[c]);
+
+                })
+                .on("mouseout",function() {
+
+                    //Remove the tooltip
+                    d3.select("#tooltip").remove();
+
+                })
+
+
+
+
+
+
+
+}
+</script>
+</body>
+
+</html>
